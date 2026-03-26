@@ -1,7 +1,7 @@
 import type { FC, PropsWithChildren } from 'hono/jsx'
 import { raw } from 'hono/html'
 
-const Layout: FC<PropsWithChildren<{ title?: string; fullHeight?: boolean }>> = ({ title, fullHeight, children }) => {
+const Layout: FC<PropsWithChildren<{ title?: string; fullHeight?: boolean; hideChrome?: boolean }>> = ({ title, fullHeight, hideChrome, children }) => {
   const pageTitle = title ? `${title} — webring.ca` : 'webring.ca'
 
   return (
@@ -15,14 +15,14 @@ const Layout: FC<PropsWithChildren<{ title?: string; fullHeight?: boolean }>> = 
           <meta name="description" content="A webring for Canadian builders — developers, designers, and founders." />
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
-          <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet" />
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=Space+Grotesk:wght@400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet" />
           <style>{raw(`
             *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
             body {
               font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
               line-height: 1.6;
               color: #1a1a1a;
-              background: #faf9f7;
+              background: #fff;
             }
             nav {
               display: flex;
@@ -96,20 +96,24 @@ const Layout: FC<PropsWithChildren<{ title?: string; fullHeight?: boolean }>> = 
         </head>
         <body class={fullHeight ? 'full-height' : ''}>
           <div class="container">
-            <nav>
-              <a href="/" class="site-name">webring.ca</a>
-              <div class="nav-links">
-                <a href="/join">join</a>
-                <a href="/directory">directory</a>
-              </div>
-            </nav>
+            {!hideChrome && (
+              <nav>
+                <a href="/" class="site-name">webring.ca</a>
+                <div class="nav-links">
+                  <a href="/join">join</a>
+                  <a href="/directory">directory</a>
+                </div>
+              </nav>
+            )}
             <main>
               {children}
             </main>
-            <footer>
-              <span>A webring for Canadian builders</span>
-              <a href="https://github.com/pangstan/webring.ca">GitHub</a>
-            </footer>
+            {!hideChrome && (
+              <footer>
+                <span>A webring for Canadian builders</span>
+                <a href="https://github.com/pangstan/webring.ca">GitHub</a>
+              </footer>
+            )}
           </div>
         </body>
       </html>
