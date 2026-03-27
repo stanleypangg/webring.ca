@@ -18,7 +18,7 @@ app.get('/directory', async (c) => {
         <ul>
           {members.map((m) => (
             <li>
-              <a href={m.url} target="_blank" rel="noopener">
+              <a href={m.url} target="_blank" rel="noopener noreferrer">
                 {m.name}
               </a>
               {m.city ? ` — ${m.city}` : ''}
