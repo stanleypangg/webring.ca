@@ -16,7 +16,9 @@ jobs:
           fetch-depth: 0
 
       - name: Overlay PR members.json
-        run: git show ${{ github.event.pull_request.head.sha }}:members.json > members.json
+        run: |
+          git fetch origin pull/${{ github.event.pull_request.number }}/head
+          git show ${{ github.event.pull_request.head.sha }}:members.json > members.json
 
       - uses: actions/setup-node@v4
         with:
