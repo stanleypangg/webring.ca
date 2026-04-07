@@ -4,7 +4,6 @@
     "name": "Stanley Pang",
     "url": "https://stanleyp.dev",
     "city": "Toronto",
-    "type": "developer",
     "active": true
   },
   {
@@ -12,7 +11,6 @@
     "name": "Timothy Khan",
     "url": "https://timothyk.dev",
     "city": "Toronto",
-    "type": "developer",
     "active": true
   },
   {
@@ -20,7 +18,6 @@
     "name": "Tahmeed T",
     "url": "https://tahmeedt.com",
     "city": "Toronto",
-    "type": "developer",
     "active": true
   },
   {
@@ -28,7 +25,6 @@
     "name": "Jace Mu",
     "url": "https://jacemu.xyz",
     "city": "Toronto",
-    "type": "developer",
     "active": true
   }
 ]
