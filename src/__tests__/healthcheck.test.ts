@@ -1,13 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { runHealthCheck } from '../cron/healthcheck'
 import { detectWidget, extractScriptUrls, detectWidgetInBundle } from '../utils/widget'
-import { notifyDiscord } from '../cron/notify'
 import { createMockKV } from './kv-mock'
 import type { Member, HealthStatus } from '../types'
-
-vi.mock('../cron/notify', () => ({
-  notifyDiscord: vi.fn(),
-}))
 
 const VALID_WIDGET = '<div data-webring="ca" data-member="alice"></div><a href="https://webring.ca/prev/alice">prev</a><a href="https://webring.ca/next/alice">next</a><script src="https://webring.ca/embed.js"></script>'
 
@@ -446,10 +441,11 @@ describe('runHealthCheck', () => {
       'health:alice': JSON.stringify(prevStatus),
     })
     mockFetch({ 'https://alice.example.com': 'error' })
+    const mockNotify = vi.fn()
 
-    await runHealthCheck(kv, 'https://discord.com/api/webhooks/test')
+    await runHealthCheck(kv, 'https://discord.com/api/webhooks/test', mockNotify)
 
-    expect(notifyDiscord).toHaveBeenCalledWith(
+    expect(mockNotify).toHaveBeenCalledWith(
       'https://discord.com/api/webhooks/test',
       [expect.objectContaining({ event: 'deactivated', reason: 'unreachable' })],
     )
@@ -461,10 +457,11 @@ describe('runHealthCheck', () => {
     mockFetch({
       'https://alice.example.com': { ok: true, status: 200, body: VALID_WIDGET },
     })
+    const mockNotify = vi.fn()
 
-    await runHealthCheck(kv, 'https://discord.com/api/webhooks/test')
+    await runHealthCheck(kv, 'https://discord.com/api/webhooks/test', mockNotify)
 
-    expect(notifyDiscord).toHaveBeenCalledWith(
+    expect(mockNotify).toHaveBeenCalledWith(
       'https://discord.com/api/webhooks/test',
       [expect.objectContaining({ event: 'reactivated' })],
     )
@@ -475,10 +472,11 @@ describe('runHealthCheck', () => {
     mockFetch({
       'https://alice.example.com': { ok: true, status: 200, body: VALID_WIDGET },
     })
+    const mockNotify = vi.fn()
 
-    await runHealthCheck(kv, 'https://discord.com/api/webhooks/test')
+    await runHealthCheck(kv, 'https://discord.com/api/webhooks/test', mockNotify)
 
-    expect(notifyDiscord).toHaveBeenCalledWith(
+    expect(mockNotify).toHaveBeenCalledWith(
       'https://discord.com/api/webhooks/test',
       [],
     )

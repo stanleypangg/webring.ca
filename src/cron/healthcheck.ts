@@ -1,6 +1,7 @@
 import type { HealthStatus } from '../types'
 import { getMembers, setMembers, getHealthStatus, setHealthStatus } from '../data'
 import { detectWidget } from '../utils/widget'
+import { notifyDiscord, type HealthEvent } from './notify'
 
 const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -33,7 +34,11 @@ function isFrameable(headers: Headers): boolean {
   return true
 }
 
-export async function runHealthCheck(kv: KVNamespace): Promise<void> {
+export async function runHealthCheck(
+  kv: KVNamespace,
+  discordWebhookUrl?: string,
+  notify: typeof notifyDiscord = notifyDiscord,
+): Promise<void> {
   const members = await getMembers(kv)
 
   const prevStatuses = await Promise.all(
@@ -113,6 +118,18 @@ export async function runHealthCheck(kv: KVNamespace): Promise<void> {
     }
     return member
   })
+
+  const events: HealthEvent[] = []
+  for (let i = 0; i < updatedMembers.length; i++) {
+    if (members[i].active && !updatedMembers[i].active) {
+      const status = statusMap.get(members[i].slug)
+      events.push({ member: members[i], event: 'deactivated', reason: status?.status })
+    }
+    if (!members[i].active && updatedMembers[i].active) {
+      events.push({ member: members[i], event: 'reactivated' })
+    }
+  }
+  await notify(discordWebhookUrl, events)
 
   const membersChanged = updatedMembers.some(
     (m, i) => m.active !== members[i].active
