@@ -12,5 +12,12 @@
     "url": "https://stanleyp.dev",
     "city": "Toronto",
     "active": true
+  },
+  {
+  "slug": "wafee-rahman",
+  "name": "Wafee Rahman",
+  "url": "https://www.wafee.net/",
+  "city": "Toronto",
+  "active": true
   }
 ]
