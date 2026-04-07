@@ -12,5 +12,12 @@
     "url": "https://stanleyp.dev",
     "city": "Toronto",
     "active": true
+  },
+  {
+    "slug": "utcjcao",
+    "name": "Chris Cao",
+    "url": "https://utcjcao.github.io/",
+    "city": "Toronto",
+    "active": true
   }
 ]
