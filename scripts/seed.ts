@@ -36,7 +36,7 @@ const slugs = fisherYatesShuffle(activeSlugs)
 
 const flags = [
   remote ? '--remote' : '--local',
-  ...(preview || !remote ? ['--preview'] : []),
+  preview || !remote ? '--preview' : '--preview=false',
 ]
 
 const cwd = resolve(import.meta.dirname!, '..')
