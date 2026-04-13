@@ -59,6 +59,8 @@ app.get('/', async (c) => {
           <meta property="og:image:width" content="1200" />
           <meta property="og:image:height" content="630" />
           <meta property="og:locale" content="en_CA" />
+          <meta property="og:site_name" content="webring.ca" />
+          <meta property="og:image:type" content="image/png" />
           <meta name="twitter:card" content="summary_large_image" />
           <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
           <link rel="stylesheet" href="/fonts.css" />
