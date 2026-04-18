@@ -14,5 +14,3 @@ docs/superpowers/
 .claude/
 .playwright-mcp/
 screenshots/
-a11y-report.json
-a11y-screenshots/
