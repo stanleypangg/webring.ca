@@ -1,0 +1,139 @@
+name: Widget Clickability Check
+
+on:
+  schedule:
+    - cron: '0 12 * * SUN'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run clickability check
+        id: check
+        run: |
+          set +e
+          npx tsx scripts/check-clickability.ts --all
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-screenshots
+          path: a11y-screenshots/
+          if-no-files-found: ignore
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-report
+          path: a11y-report.json
+          if-no-files-found: ignore
+
+      - name: Update tracking issue
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs')
+            let report
+            try {
+              report = JSON.parse(fs.readFileSync('a11y-report.json', 'utf-8'))
+            } catch (e) {
+              core.warning('a11y-report.json missing or unreadable; skipping issue upsert')
+              return
+            }
+            const failures = report.reports.filter(r => r.status !== 'ok')
+            const title = '[widget-clickability] Members with covered widgets'
+            const label = 'widget-clickability'
+
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: label,
+              per_page: 10,
+            })
+            const current = existing.find(i => i.title === title)
+
+            if (failures.length === 0) {
+              if (current) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: current.number,
+                  state: 'closed',
+                })
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: current.number,
+                  body: `All member widgets are clickable as of ${report.generatedAt}. Closing.`,
+                })
+              }
+              return
+            }
+
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            const lines = [
+              `_Last checked: ${report.generatedAt}_`,
+              '',
+              `Report and screenshots are attached as artifacts on the [latest run](${runUrl}).`,
+              '',
+              '| Member | Status | Issue |',
+              '| --- | --- | --- |',
+            ]
+            for (const r of failures) {
+              let detail = ''
+              if (r.status === 'widget_missing') {
+                detail = 'Widget not detected on page'
+              } else if (r.status === 'site_error') {
+                detail = `Site error: ${r.errorMessage ?? 'unknown'}`
+              } else {
+                const covered = r.links.filter(l => !l.clickable)
+                const parts = covered.map(l => {
+                  const ob = l.obstructor ? `${l.obstructor.tag}${l.obstructor.id ? '#' + l.obstructor.id : ''}${l.obstructor.class ? '.' + l.obstructor.class.split(' ').join('.') : ''}` : '?'
+                  return `${l.role}/${l.viewport} covered by \`${ob}\``
+                })
+                detail = parts.join('<br>')
+              }
+              lines.push(`| [${r.slug}](${r.url}) | ${r.status} | ${detail} |`)
+            }
+            const body = lines.join('\n')
+
+            if (current) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: current.number,
+                body,
+              })
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: [label],
+              })
+            }
+
+      - name: Mark job failed when checks failed
+        if: steps.check.outputs.exit_code != '0'
+        run: exit 1

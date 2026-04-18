@@ -1,3 +1,9 @@
+# IMPORTANT: This workflow uses pull_request_target, which runs with write
+# permissions to the base repo. The overlay step below is restricted to
+# members/*.json DATA files -- all executable code (scripts/, src/) comes
+# exclusively from the base branch checkout and MUST NOT be overlaid from
+# the PR head. Never expand the overlay paths without also migrating this
+# workflow to a safer trigger (e.g. pull_request + workflow_run).
 name: Validate New Member
 
 on:
@@ -46,17 +52,66 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           exit 0
 
+      - name: Determine changed slugs
+        id: slugs
+        run: |
+          MERGE_BASE=$(git merge-base HEAD ${{ github.event.pull_request.head.sha }})
+          SLUGS=""
+          for file in $(git diff --name-only "$MERGE_BASE" ${{ github.event.pull_request.head.sha }} -- 'members/*.json'); do
+            if [ -f "$file" ]; then
+              SLUG=$(basename "$file" .json)
+              SLUGS="$SLUGS $SLUG"
+            fi
+          done
+          echo "slugs=$(echo $SLUGS | xargs)" >> "$GITHUB_OUTPUT"
+
+      - name: Install Chromium
+        if: steps.slugs.outputs.slugs != ''
+        run: npx playwright install --with-deps chromium
+
+      - name: Run clickability check
+        id: clickability
+        if: steps.slugs.outputs.slugs != ''
+        env:
+          SLUGS: ${{ steps.slugs.outputs.slugs }}
+        run: |
+          set +e
+          {
+            echo "output<<CLICKABILITY_EOF"
+            echo "## Widget Clickability"
+            for slug in $SLUGS; do
+              if [[ ! "$slug" =~ ^[a-z0-9-]+$ ]]; then
+                echo "- WARNING: skipping invalid slug"
+                continue
+              fi
+              npx tsx scripts/check-clickability.ts --slug "$slug" --markdown 2>/dev/null | tail -n +2
+            done
+            echo "CLICKABILITY_EOF"
+          } >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload clickability screenshots
+        if: steps.slugs.outputs.slugs != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-screenshots
+          path: a11y-screenshots/
+          if-no-files-found: ignore
+
       - name: Post PR comment
         uses: actions/github-script@v7
         env:
           VALIDATION_OUTPUT: ${{ steps.validate.outputs.output }}
+          CLICKABILITY_OUTPUT: ${{ steps.clickability.outputs.output }}
         with:
           script: |
+            const parts = [process.env.VALIDATION_OUTPUT]
+            if (process.env.CLICKABILITY_OUTPUT) parts.push(process.env.CLICKABILITY_OUTPUT)
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: process.env.VALIDATION_OUTPUT
+              body: parts.join('\n\n')
             });
 
       - name: Exit with validation result

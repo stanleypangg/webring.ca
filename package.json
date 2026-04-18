@@ -10,6 +10,7 @@
     "seed": "tsx scripts/seed.ts",
     "enrich:coords": "tsx scripts/enrich-coords.ts",
     "validate": "tsx scripts/validate.ts",
+    "check:clickability": "tsx scripts/check-clickability.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "typecheck:scripts": "tsc --noEmit -p tsconfig.scripts.json"
@@ -28,6 +29,7 @@
     "d3-force": "^3.0.0",
     "d3-geo": "^3.1.1",
     "d3-selection": "^3.0.0",
+    "playwright": "^1.59.1",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0",
