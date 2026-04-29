@@ -7,6 +7,7 @@ const CITY_COORDS: Readonly<Record<string, CityCoord>> = {
   'Toronto': { lat: 43.65, lng: -79.38 },
   'Vancouver': { lat: 49.28, lng: -123.12 },
   'Montreal': { lat: 45.50, lng: -73.57 },
+  'Montréal': { lat: 45.50, lng: -73.57 },
   'Ottawa': { lat: 45.42, lng: -75.70 },
   'Calgary': { lat: 51.05, lng: -114.07 },
   'Edmonton': { lat: 53.55, lng: -113.49 },
